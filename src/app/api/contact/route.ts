@@ -56,6 +56,23 @@ export async function POST(request: NextRequest) {
   const subject = `Nowa wiadomość ze strony: ${topic || "Kontakt"}`;
   const text = `Imię: ${name}\nE-mail: ${email}\nTemat: ${topic || "—"}\n\nWiadomość:\n${message}`;
 
+  const copySubject = `Kopia Twojej wiadomości: ${topic || "Kontakt"}`;
+  const copyText = [
+    `Cześć ${name},`,
+    "",
+    "Otrzymaliśmy Twoją wiadomość wysłaną przez formularz na stronie uksrar.pl.",
+    "Poniżej znajduje się jej kopia:",
+    "",
+    `Temat: ${topic || "—"}`,
+    "",
+    message,
+    "",
+    "—",
+    "Rudzka Akademia Rowerowa",
+    contact.email,
+    contact.phone,
+  ].join("\n");
+
   try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -71,6 +88,13 @@ export async function POST(request: NextRequest) {
       replyTo: email,
       subject,
       text,
+    });
+
+    await transporter.sendMail({
+      from: `"Rudzka Akademia Rowerowa" <${gmailUser}>`,
+      to: email,
+      subject: copySubject,
+      text: copyText,
     });
 
     return NextResponse.json({ ok: true, delivered: true, via: "gmail" });

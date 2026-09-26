@@ -87,11 +87,6 @@ export default function HomePage() {
 
       {/* ========== KONTAKT ========== */}
       <div id="contact" className="contact-split">
-        <section id="contact-form" className="contact-form contact-split-form">
-          <h2>Wyślij do nas wiadomość</h2>
-          <ContactForm />
-        </section>
-
         <section id="contact-us" className="contact-us contact-split-info">
           <div className="contact-info-card">
             <h2>Masz jakieś pytania?</h2>
@@ -118,10 +113,15 @@ export default function HomePage() {
               <div className="contact-channel contact-channel-plain">
                 <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
                 <span className="contact-channel-label">Formularz</span>
-                <span className="contact-channel-value">Skorzystaj z formularza na stronie</span>
+                <span className="contact-channel-value">Skorzystaj z formularza poniżej</span>
               </div>
             </div>
           </div>
+        </section>
+
+        <section id="contact-form" className="contact-form contact-split-form">
+          <h2>Wyślij do nas wiadomość</h2>
+          <ContactForm />
         </section>
       </div>
 

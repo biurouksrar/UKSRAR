@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb, isDbConfigured } from "@/lib/db";
+import { dbTable, getDb, isDbConfigured } from "@/lib/db";
 import {
   isRentalResource,
   isValidIsoDate,
@@ -34,10 +34,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const sql = getDb();
+    const reservations = dbTable(sql, "rental_reservations");
     const rows = to
       ? await sql<TrailerBookingRange[]>`
           SELECT start_date::text, end_date::text, status
-          FROM trailer_reservations
+          FROM ${reservations}
           WHERE resource = ${resourceParam}
             AND status IN ('pending', 'confirmed')
             AND start_date <= ${to}::date
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
         `
       : await sql<TrailerBookingRange[]>`
           SELECT start_date::text, end_date::text, status
-          FROM trailer_reservations
+          FROM ${reservations}
           WHERE resource = ${resourceParam}
             AND status IN ('pending', 'confirmed')
             AND end_date >= ${from}::date

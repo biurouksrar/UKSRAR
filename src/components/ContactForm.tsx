@@ -10,7 +10,8 @@ export default function ContactForm() {
   useEffect(() => {
     if (status !== "success" && status !== "error") return;
 
-    const timer = setTimeout(() => setStatus("idle"), 20_000);
+    const ms = status === "success" ? 5_000 : 8_000;
+    const timer = setTimeout(() => setStatus("idle"), ms);
     return () => clearTimeout(timer);
   }, [status]);
 
@@ -45,7 +46,7 @@ export default function ContactForm() {
   return (
     <div className="contact-form-card">
       {status === "success" && (
-        <div className="contact-form-success">
+        <div className="contact-form-toast" role="status" aria-live="polite">
           <p>Dziękujemy za wiadomość! Skontaktujemy się wkrótce.</p>
         </div>
       )}

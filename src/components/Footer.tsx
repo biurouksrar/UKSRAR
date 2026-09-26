@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { contact, navLinks, site, socialLinks } from "@/lib/content";
 
 const iconClass: Record<string, string> = {
@@ -11,16 +10,6 @@ export default function Footer() {
   return (
     <footer>
       <div className="footer-content">
-        <a className="footer-logo" href="/#hero">
-          <Image
-            src="/images/logo.png"
-            alt={`${site.name} Logo`}
-            width={160}
-            height={128}
-            style={{ height: "8rem", width: "auto" }}
-          />
-        </a>
-
         <div className="contact-info">
           <h3>Kontakt</h3>
           <a href={contact.emailHref}>

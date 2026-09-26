@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { contact } from "@/lib/content";
-import { getDb, isDbConfigured } from "@/lib/db";
+import { dbTable, getDb, isDbConfigured } from "@/lib/db";
 import {
   compareIsoDates,
   isRentalResource,
@@ -125,10 +125,11 @@ export async function POST(request: NextRequest) {
 
   try {
     const sql = getDb();
+    const reservations = dbTable(sql, "rental_reservations");
 
     const conflicts = await sql`
       SELECT id
-      FROM trailer_reservations
+      FROM ${reservations}
       WHERE resource = ${resourceParam}
         AND status IN ('pending', 'confirmed')
         AND start_date <= ${endDate}::date
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
     }
 
     const inserted = await sql<{ id: number }[]>`
-      INSERT INTO trailer_reservations (resource, name, email, phone, start_date, end_date, notes, status)
+      INSERT INTO ${reservations} (resource, name, email, phone, start_date, end_date, notes, status)
       VALUES (
         ${resourceParam},
         ${name},
