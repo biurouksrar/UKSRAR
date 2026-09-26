@@ -8,7 +8,7 @@ export const site = {
     "Rudzka Akademia Rowerowa - szkoła jazdy na rowerze dla dzieci, młodzieży i dorosłych. Kursy, treningi i obozy letnie.",
   keywords:
     "akademia rowerowa, jazda na rowerze, kursy rowerowe, szkoła jazdy, obozy letnie, Rudzka",
-  themeColor: "#9AC31B",
+  themeColor: "#9BC41B",
   url: "https://uksrar.pl",
 };
 

@@ -24,15 +24,15 @@ export default function Footer() {
         <div className="contact-info">
           <h3>Kontakt</h3>
           <a href={contact.emailHref}>
-            <i className="fa-solid fa-envelope" style={{ fontSize: "2rem", color: "#1E212B" }} />
+            <i className="fa-solid fa-envelope" style={{ fontSize: "2rem", color: "#24343C" }} />
             <p>{contact.email}</p>
           </a>
           <div className="footer-phone footer-phone--desktop">
-            <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#1E212B" }} />
+            <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#24343C" }} />
             <p>{contact.phone}</p>
           </div>
           <a href={contact.phoneHref} className="footer-phone footer-phone--mobile">
-            <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#1E212B" }} />
+            <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#24343C" }} />
             <p>{contact.phone}</p>
           </a>
         </div>
