@@ -1,11 +1,18 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 
 type Status = "idle" | "sending" | "success" | "error";
 
 export default function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
+
+  useEffect(() => {
+    if (status !== "success" && status !== "error") return;
+
+    const timer = setTimeout(() => setStatus("idle"), 20_000);
+    return () => clearTimeout(timer);
+  }, [status]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,8 +76,10 @@ export default function ContactForm() {
           <input type="text" name="contact_topic" />
         </label>
         <label className="contact-form_field">
-          <span>Wiadomość</span>
-          <textarea name="contact_message" rows={6} />
+          <span>
+            Wiadomość <em>(wymagane)</em>
+          </span>
+          <textarea name="contact_message" rows={6} required />
         </label>
         <button type="submit" className="btn-primary contact-form_submit" disabled={status === "sending"}>
           {status === "sending" ? "Wysyłanie..." : "Wyślij"}

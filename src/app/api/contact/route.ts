@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
 import { contact } from "@/lib/content";
 
-// Zamiennik logiki formularza kontaktowego z contact_page.php (WordPress).
-// W WordPressie formularz zapisywał zgłoszenie jako wpis (contact_form_answers)
-// i wysyłał e-mail przez wp_mail(). Tutaj, ponieważ nie ma już WordPressa/bazy danych,
-// wysyłamy e-mail bezpośrednio przez Resend (https://resend.com).
+// Formularz kontaktowy – wysyłka przez Gmail SMTP.
 //
-// Jak podłączyć wysyłkę maili:
-// 1. Załóż darmowe konto na https://resend.com i zweryfikuj domenę (albo użyj
-//    ich domeny testowej na start).
-// 2. Wygeneruj API key i dodaj go w Vercel: Project Settings -> Environment
-//    Variables -> RESEND_API_KEY.
-// 3. Opcjonalnie ustaw CONTACT_FROM_EMAIL na adres z Twojej zweryfikowanej domeny
-//    (np. formularz@uksrar.pl). Bez tego użyty zostanie adres testowy Resend.
+// W .env.local / Vercel Environment Variables ustaw:
+//   GMAIL_USER=biurouksrar@gmail.com
+//   GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx   (hasło aplikacji z Google)
+//   CONTACT_TO_EMAIL=biurouksrar@gmail.com   (opcjonalnie)
 //
-// Dopóki RESEND_API_KEY nie jest ustawiony, zgłoszenia są tylko logowane
-// w konsoli (widoczne w Vercel -> Deployments -> Logs), żeby formularz
-// dało się przetestować zanim podłączysz właściwą wysyłkę maili.
+// Hasło aplikacji: konto Google → bezpieczeństwo → weryfikacja 2-etapowa
+// → hasła aplikacji → Poczta.
 
 type ContactPayload = {
   name?: string;
@@ -24,6 +18,8 @@ type ContactPayload = {
   topic?: string;
   message?: string;
 };
+
+const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? contact.email;
 
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -42,48 +38,44 @@ export async function POST(request: NextRequest) {
   const topic = (body.topic ?? "").trim();
   const message = (body.message ?? "").trim();
 
-  if (!name || !email || !isValidEmail(email)) {
+  if (!name || !email || !isValidEmail(email) || !message) {
     return NextResponse.json({ error: "Uzupełnij poprawnie wymagane pola." }, { status: 400 });
   }
 
-  const resendApiKey = process.env.RESEND_API_KEY;
+  const gmailUser = process.env.GMAIL_USER?.trim();
+  const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "");
 
-  if (!resendApiKey) {
-    // Brak konfiguracji e-mail - logujemy zgłoszenie, żeby formularz działał od razu.
-    console.log("[kontakt] Nowe zgłoszenie (RESEND_API_KEY nie ustawiony):", {
-      name,
-      email,
-      topic,
-      message,
-    });
-    return NextResponse.json({ ok: true, delivered: false });
+  if (!gmailUser || !gmailPass) {
+    console.error("[kontakt] Brak GMAIL_USER lub GMAIL_APP_PASSWORD w zmiennych środowiskowych.");
+    return NextResponse.json(
+      { error: "Formularz nie jest skonfigurowany. Brakuje danych skrzynki Gmail." },
+      { status: 503 },
+    );
   }
 
+  const subject = `Nowa wiadomość ze strony: ${topic || "Kontakt"}`;
+  const text = `Imię: ${name}\nE-mail: ${email}\nTemat: ${topic || "—"}\n\nWiadomość:\n${message}`;
+
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendApiKey}`,
-        "Content-Type": "application/json",
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: gmailUser,
+        pass: gmailPass,
       },
-      body: JSON.stringify({
-        from: process.env.CONTACT_FROM_EMAIL ?? "Rudzka Akademia Rowerowa <onboarding@resend.dev>",
-        to: contact.email,
-        reply_to: email,
-        subject: `Nowa wiadomość ze strony: ${topic || "Kontakt"}`,
-        text: `Imię: ${name}\nE-mail: ${email}\nTemat: ${topic}\n\nWiadomość:\n${message}`,
-      }),
     });
 
-    if (!res.ok) {
-      const details = await res.text();
-      console.error("[kontakt] Błąd wysyłki e-mail:", details);
-      return NextResponse.json({ error: "Nie udało się wysłać wiadomości." }, { status: 502 });
-    }
+    await transporter.sendMail({
+      from: `"Wiadomość z formularza" <${gmailUser}>`,
+      to: CONTACT_TO,
+      replyTo: email,
+      subject,
+      text,
+    });
 
-    return NextResponse.json({ ok: true, delivered: true });
+    return NextResponse.json({ ok: true, delivered: true, via: "gmail" });
   } catch (err) {
-    console.error("[kontakt] Błąd wysyłki e-mail:", err);
+    console.error("[kontakt] Błąd wysyłki Gmail:", err);
     return NextResponse.json({ error: "Nie udało się wysłać wiadomości." }, { status: 500 });
   }
 }

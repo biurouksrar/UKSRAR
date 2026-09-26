@@ -38,9 +38,48 @@ export const socialLinks = [
 ];
 
 export const navLinks = [
-  { label: "Strona główna", href: "/" },
-  { label: "O nas", href: "/o-nas" },
-  { label: "Wydarzenia", href: "/wydarzenia" },
+  { label: "O nas", href: "/#about" },
+  { label: "Oferta dla dzieci i młodzieży", href: "/#oferta" },
+  { label: "Galeria", href: "/#galeria" },
+  { label: "Poradnik rowerowy", href: "/#news" },
+  { label: "Co o nas mówią", href: "/#testimonials" },
+  { label: "Wypożyczalnia", href: "/#wypozyczalnia" },
+];
+
+export type GalleryImage = {
+  src: string;
+  alt: string;
+};
+
+export const galleryImages: GalleryImage[] = [
+  {
+    src: "/galeria/grupa-nad-jeziorem.jpeg",
+    alt: "Zdjęcie grupowe nad jeziorem — Rudzka Akademia Rowerowa",
+  },
+  {
+    src: "/galeria/grupa-w-gorach.jpeg",
+    alt: "Grupa rowerowa w górach z rowerami MTB",
+  },
+  {
+    src: "/galeria/grupa-w-pieninach.jpg",
+    alt: "Uczestnicy wycieczki rowerowej w Pieninach",
+  },
+  {
+    src: "/galeria/wycieczka-nad-rzeka.jpg",
+    alt: "Wycieczka rowerowa nad rzeką wśród skał",
+  },
+  {
+    src: "/galeria/selfie-na-halli.jpeg",
+    alt: "Selfie grupy na hali z widokiem na góry",
+  },
+  {
+    src: "/galeria/jazda-o-zachodzie-slonca.jpeg",
+    alt: "Jazda grupowa rowerem o zachodzie słońca",
+  },
+  {
+    src: "/galeria/vany-transportowe.jpg",
+    alt: "Busy transportowe Rudzkiej Akademii Rowerowej",
+  },
 ];
 
 export const testimonials = [
@@ -67,14 +106,12 @@ export const instructors = [
     name: "Bartłomiej Warzecha",
     description:
       "Pomysłodawca i założyciel Szkoły Pływania Posejdon, fizjoterapeuta, instruktor pływania i ratownik WOPR z wieloletnim doświadczeniem. Trener personalny, sędzia pływania oraz ratownik kwalifikowanej pierwszej pomocy.",
-    photo: "/images/team-3.webp",
   },
   {
     id: "instructor-2",
     name: "Marcin Michalik",
     description:
       "Współzałożyciel Szkoły Pływania Posejdon, instruktor pływania i ratownik WOPR z wieloletnim doświadczeniem. Ratownik kwalifikowanej pierwszej pomocy, sternik motorowodny oraz specjalista w zakresie ratownictwa wodnego i powodziowego.",
-    photo: "/images/team-2.webp",
   },
 ];
 
@@ -85,7 +122,7 @@ export type NewsPost = {
   displayDate: string;
   author: string;
   excerpt: string;
-  image: string;
+  image?: string;
   contentHtml: string;
 };
 
@@ -98,7 +135,6 @@ export const newsPosts: NewsPost[] = [
     author: "Rudzka Akademia Rowerowa",
     excerpt:
       "Udział w pierwszym obozie rowerowym może być jednocześnie ekscytujący i nieco stresujący. Wielu rowerzystów zastanawia się, czy będą wystarczająco przygotowani...",
-    image: "/images/news-pierwszy-oboz.webp",
     contentHtml: `
 <p>Udział w pierwszym obozie rowerowym może być jednocześnie ekscytujący i nieco stresujący. Wielu rowerzystów zastanawia się, czy będą wystarczająco przygotowani, czy dadzą radę w grupie i czego się spodziewać. Dobra wiadomość jest taka, że obozy rowerowe są tworzone po to, aby pomagać w rozwoju, a nie po to, aby wymagać perfekcji.</p>
 <p>Przy odpowiednim przygotowaniu Twój pierwszy obóz może stać się jednym z najbardziej wartościowych doświadczeń w Twojej rowerowej drodze.</p>
@@ -164,7 +200,6 @@ export const newsPosts: NewsPost[] = [
     author: "Rudzka Akademia Rowerowa",
     excerpt:
       "Dla wielu rowerzystów trening w pojedynkę w pewnym momencie osiąga granicę. Motywacja spada, rutyna staje się powtarzalna, a postępy zwalniają...",
-    image: "/images/news-oboz.webp",
     contentHtml: `
 <p>Dla wielu rowerzystów trening w pojedynkę w pewnym momencie osiąga granicę. Motywacja spada, rutyna staje się powtarzalna, a postępy zwalniają. Obóz rowerowy oferuje coś innego, możliwość poprawy kondycji, rozwijania umiejętności i ponownego odkrycia radości z jazdy w skoncentrowanym i wspierającym środowisku.</p>
 <p>Niezależnie od tego, czy jesteś początkującym, który chce zyskać pewność siebie, czy doświadczonym kolarzem dążącym do kolejnego poziomu, obóz rowerowy może być jedną z najbardziej wartościowych inwestycji w rozwój.</p>
@@ -219,7 +254,6 @@ export const newsPosts: NewsPost[] = [
     author: "Rudzka Akademia Rowerowa",
     excerpt:
       "Jazda na rowerze często postrzegana jest jako aktywność indywidualna. Jednak wspólna jazda może przekształcić rower w coś znacznie bardziej wartościowego...",
-    image: "/images/news-razem.webp",
     contentHtml: `
 <p>Jazda na rowerze często postrzegana jest jako aktywność indywidualna, okazja do oczyszczenia umysłu, podjęcia wyzwania lub po prostu przemieszczania się z miejsca na miejsce. Jednak wspólna jazda może przekształcić rower w coś znacznie bardziej wartościowego. Niezależnie od tego, czy jeździsz z przyjaciółmi, rodziną, partnerem czy lokalnym klubem rowerowym, wspólne pedałowanie przynosi korzyści fizyczne, psychiczne i społeczne, które wykraczają daleko poza samą aktywność fizyczną.</p>
 <h3>Większa motywacja i regularność</h3>
@@ -250,45 +284,20 @@ export const newsPosts: NewsPost[] = [
   },
 ];
 
-export const campData = {
-  title: "Obóz Rowerowy VIP Pieniny 2026: Twoje Dziecko w Świecie Pasji i Przygody!",
-  vipDetails: [
-    "Kameralne grupy: Tylko 16 uczestników na turnusie.",
-    "Bezpieczeństwo przede wszystkim: Gwarantujemy opiekę 1 instruktora na zaledwie 4 uczestników!",
-    "Komfort: Podróżujemy nowoczesnymi, 9-osobowymi busami.",
-    "Baza wypadowa: Mieszkamy w urokliwej Willi Przekop w Sromowcach Wyżnych, tuż przy najpiękniejszych trasach rowerowych Polski.",
-  ],
-  programDetails: [
-    "Velo Czorsztyn & Velo Dunajec: najpiękniejsze ścieżki rowerowe w tej części Europy.",
-    "Warsztaty techniczne: nauczymy Twoje dziecko, jak zadbać o własny sprzęt.",
-    "Zakopane: regeneracja i zwiedzanie stolicy Tatr.",
-    "Pontonowy Spływ Dunajcem: potężna dawka adrenaliny w bezpiecznym wydaniu.",
-    "Integracja offline: Ogniska, gry terenowe i wielka niespodzianka dla każdego uczestnika!",
-  ],
-  dateOne: "29.06.2026 do 05.07.2026 (Zostało tylko 9 miejsc!)",
-  dateTwo: "20.07.2026 do 26.07.2026 (Zostało tylko 7 miejsc!)",
-  price: "2 599 zł",
-};
-
 export const faq = [
   {
-    question:
-      "Czy można zapisać się na kurs jazdy na rowerze bez wcześniejszego doświadczenia?",
+    question: "Dla kogo są Wasze obozy i wycieczki?",
     answer:
-      "Tak, prowadzimy zajęcia zarówno dla początkujących dzieci, jak i dorosłych. Instruktorzy dopasowują poziom nauki do uczestnika, dzięki czemu każdy może uczyć się w swoim tempie.",
+      "Organizujemy wycieczki rowerowe oraz obozy letnie dla dzieci i młodzieży, a także wydarzenia dla osób dorosłych. Celem jest wspólna jazda, aktywność na świeżym powietrzu i budowanie rowerowej społeczności.",
   },
   {
-    question: "Jakie wydarzenia organizuje akademia rowerowa?",
+    question: "Jak zapisać się na wydarzenie?",
     answer:
-      "Regularnie organizujemy rodzinne przejazdy rowerowe, warsztaty bezpieczeństwa, treningi grupowe oraz wydarzenia sportowe dla dzieci i dorosłych.",
+      "Terminy znajdziesz w kalendarzu na stronie. Aby zapisać się na wydarzenie, napisz na biurouksrar@gmail.com albo skorzystaj z formularza kontaktowego. Możesz też zadzwonić pod +48 602 480 400.",
   },
   {
-    question: "Co obejmuje letni obóz rowerowy?",
+    question: "Czy można wypożyczyć przyczepę rowerową?",
     answer:
-      "Letni obóz rowerowy łączy naukę jazdy, aktywności sportowe oraz wspólne wycieczki rowerowe. Zajęcia są prowadzone w bezpiecznej i przyjaznej atmosferze pod opieką doświadczonych instruktorów.",
+      "Tak. Przyczepę rowerową możesz zarezerwować bezpośrednio na stronie — sprawdź dostępność w kalendarzu i złóż rezerwację. W razie pytań napisz lub zadzwoń, chętnie pomożemy.",
   },
 ];
-
-// Google Calendar publiczny kalendarz wydarzeń (ten sam co na starej stronie w WordPress)
-export const googleCalendarEmbedSrc =
-  "https://calendar.google.com/calendar/embed?src=biurouksrar%40gmail.com&ctz=Europe%2FWarsaw";

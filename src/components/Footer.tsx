@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { contact, navLinks, site, socialLinks } from "@/lib/content";
 
@@ -12,7 +11,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="footer-content">
-        <Link className="footer-logo" href="/">
+        <a className="footer-logo" href="/#hero">
           <Image
             src="/images/logo.png"
             alt={`${site.name} Logo`}
@@ -20,7 +19,7 @@ export default function Footer() {
             height={128}
             style={{ height: "8rem", width: "auto" }}
           />
-        </Link>
+        </a>
 
         <div className="contact-info">
           <h3>Kontakt</h3>
@@ -28,7 +27,11 @@ export default function Footer() {
             <i className="fa-solid fa-envelope" style={{ fontSize: "2rem", color: "#1E212B" }} />
             <p>{contact.email}</p>
           </a>
-          <a href={contact.phoneHref}>
+          <div className="footer-phone footer-phone--desktop">
+            <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#1E212B" }} />
+            <p>{contact.phone}</p>
+          </div>
+          <a href={contact.phoneHref} className="footer-phone footer-phone--mobile">
             <i className="fa-solid fa-phone" style={{ fontSize: "2rem", color: "#1E212B" }} />
             <p>{contact.phone}</p>
           </a>
@@ -38,11 +41,11 @@ export default function Footer() {
           <h3>Skróty</h3>
           {navLinks.map((link) => (
             <p key={link.href}>
-              <Link href={link.href}>{link.label}</Link>
+              <a href={link.href}>{link.label}</a>
             </p>
           ))}
           <p>
-            <Link href="/kontakt">Kontakt</Link>
+            <a href="/#contact-form">Kontakt</a>
           </p>
         </div>
 

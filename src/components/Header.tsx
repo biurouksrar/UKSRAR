@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { navLinks, site, socialLinks } from "@/lib/content";
 
@@ -14,53 +13,63 @@ const iconClass: Record<string, string> = {
 export default function Header() {
   const [open, setOpen] = useState(false);
 
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   return (
     <header className={`nav-header${open ? " nav-open" : ""}`}>
       <div className="nav-inner">
-        <Link className="nav-branding desktop-only" href="/">
+        <a
+          className="nav-branding"
+          href="/#hero"
+          onClick={() => {
+            setOpen(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+        >
           <Image
             className="nav-logo"
             src="/images/logo.png"
             alt={`${site.name} logo`}
-            width={200}
-            height={100}
+            width={260}
+            height={130}
             priority
           />
-        </Link>
+        </a>
 
         <button
           className="nav-toggle"
           aria-expanded={open}
           aria-controls="primary-menu"
-          aria-label="Otwórz menu"
+          aria-label={open ? "Zamknij menu" : "Otwórz menu"}
           onClick={() => setOpen((v) => !v)}
         >
           <i className={open ? "fas fa-xmark" : "fas fa-bars"} aria-hidden="true" />
           <span className="screen-reader-text">Przełącz nawigację</span>
         </button>
 
-        <nav className={`navigation-area${open ? " open" : ""}`} aria-label="Nawigacja główna">
-          <div className="mobile-nav-header mobile-only">
-            <Link className="nav-branding mobile-branding" href="/">
-              <Image
-                className="nav-logo mobile-logo"
-                src="/images/logo.png"
-                alt={`${site.name} logo`}
-                width={160}
-                height={80}
-              />
-            </Link>
-          </div>
-
-          <ul className="nav-menu" id="primary-menu">
+        <nav
+          className={`navigation-area${open ? " open" : ""}`}
+          id="primary-menu"
+          aria-label="Nawigacja główna"
+        >
+          <ul className="nav-menu">
             {navLinks.map((link) => (
               <li key={link.href}>
-                <Link href={link.href}>{link.label}</Link>
+                <a href={link.href} onClick={() => setOpen(false)}>
+                  {link.label}
+                </a>
               </li>
             ))}
-            <Link className="btn-primary" href="/kontakt">
-              kontakt
-            </Link>
+            <li className="nav-menu-cta">
+              <a className="btn btn-primary" href="/#contact-form" onClick={() => setOpen(false)}>
+                Kontakt
+              </a>
+            </li>
           </ul>
 
           <div className="mobile-social mobile-only">
@@ -72,7 +81,7 @@ export default function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <i className={iconClass[social.icon]} style={{ fontSize: "1.5rem" }} aria-hidden="true" />
+                <i className={iconClass[social.icon]} aria-hidden="true" />
                 <span className="screen-reader-text">{social.name}</span>
               </a>
             ))}
@@ -88,7 +97,7 @@ export default function Header() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <i className={iconClass[social.icon]} style={{ fontSize: "1.5rem" }} aria-hidden="true" />
+              <i className={iconClass[social.icon]} style={{ fontSize: "2rem" }} aria-hidden="true" />
               <span className="screen-reader-text">{social.name}</span>
             </a>
           ))}

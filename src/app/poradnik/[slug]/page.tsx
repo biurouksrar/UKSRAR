@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function NewsPostPage({ params }: Props) {
+export default async function PoradnikPostPage({ params }: Props) {
   const { slug } = await params;
   const post = newsPosts.find((p) => p.slug === slug);
 
@@ -31,10 +31,12 @@ export default async function NewsPostPage({ params }: Props) {
 
   return (
     <section className="single-post container-primary">
-      <div className="single-post-image">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={post.image} alt={post.title} />
-      </div>
+      {post.image ? (
+        <div className="single-post-image">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={post.image} alt={post.title} />
+        </div>
+      ) : null}
 
       <header className="single-post-header">
         <h1>{post.title}</h1>
@@ -49,8 +51,8 @@ export default async function NewsPostPage({ params }: Props) {
       />
 
       <div className="button-container single-post-button">
-        <Link href="/wydarzenia#news" className="btn btn-secondary">
-          Powrót do aktualności
+        <Link href="/" className="btn btn-secondary">
+          Powrót do strony głównej
         </Link>
       </div>
     </section>
