@@ -92,25 +92,27 @@ export async function findEmailByAccessToken(token: string) {
   return rows[0]?.email ?? null;
 }
 
-export async function listReservationsForEmail(email: string) {
+export type CustomerReservationRow = {
+  id: number;
+  resource: RentalResource;
+  name: string;
+  email: string;
+  phone: string;
+  start_date: string;
+  end_date: string;
+  notes: string | null;
+  status: TrailerReservationStatus;
+  created_at: string;
+};
+
+export async function listReservationsForEmail(
+  email: string,
+): Promise<CustomerReservationRow[]> {
   const sql = getDb();
   const reservations = dbTable(sql, "rental_reservations");
   const normalized = normalizeEmail(email);
 
-  return sql<
-    {
-      id: number;
-      resource: RentalResource;
-      name: string;
-      email: string;
-      phone: string;
-      start_date: string;
-      end_date: string;
-      notes: string | null;
-      status: TrailerReservationStatus;
-      created_at: string;
-    }[]
-  >`
+  return sql<CustomerReservationRow[]>`
     SELECT
       id,
       resource,

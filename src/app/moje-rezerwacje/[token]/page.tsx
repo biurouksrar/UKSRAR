@@ -12,6 +12,7 @@ import {
   isValidAccessToken,
   listReservationsForEmail,
   rentalStatusLabels,
+  type CustomerReservationRow,
 } from "@/lib/rental-access";
 import { rentalResourceLabels } from "@/lib/trailer";
 
@@ -53,7 +54,7 @@ export default async function MyReservationsPage({ params }: Props) {
     }
 
     let email: string | null = null;
-    let rows: Awaited<ReturnType<typeof listReservationsForEmail>> = [];
+    let rows: CustomerReservationRow[] = [];
     let loadError = false;
 
     try {
