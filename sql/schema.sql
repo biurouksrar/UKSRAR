@@ -45,7 +45,6 @@ CREATE TABLE IF NOT EXISTS app_prod.rental_reservations (
   CONSTRAINT rental_reservations_dates_chk CHECK (end_date >= start_date)
 );
 
--- Szybkie sprawdzanie kolizji zakresów dat w ramach zasobu
 CREATE INDEX IF NOT EXISTS rental_reservations_resource_range_idx
   ON app_dev.rental_reservations (resource, start_date, end_date)
   WHERE status <> 'cancelled';
@@ -53,3 +52,31 @@ CREATE INDEX IF NOT EXISTS rental_reservations_resource_range_idx
 CREATE INDEX IF NOT EXISTS rental_reservations_resource_range_idx
   ON app_prod.rental_reservations (resource, start_date, end_date)
   WHERE status <> 'cancelled';
+
+CREATE INDEX IF NOT EXISTS rental_reservations_email_idx
+  ON app_dev.rental_reservations (lower(email));
+
+CREATE INDEX IF NOT EXISTS rental_reservations_email_idx
+  ON app_prod.rental_reservations (lower(email));
+
+-- ---------------------------------------------------------------------------
+-- Stały link klienta do listy rezerwacji (bez logowania)
+-- Jeden token na adres e-mail — kolejne rezerwacje trafiają pod ten sam link.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS app_dev.rental_access_tokens (
+  id          BIGSERIAL PRIMARY KEY,
+  email       TEXT NOT NULL,
+  token       TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT rental_access_tokens_email_uq UNIQUE (email),
+  CONSTRAINT rental_access_tokens_token_uq UNIQUE (token)
+);
+
+CREATE TABLE IF NOT EXISTS app_prod.rental_access_tokens (
+  id          BIGSERIAL PRIMARY KEY,
+  email       TEXT NOT NULL,
+  token       TEXT NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT rental_access_tokens_email_uq UNIQUE (email),
+  CONSTRAINT rental_access_tokens_token_uq UNIQUE (token)
+);

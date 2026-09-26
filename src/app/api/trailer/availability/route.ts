@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { dbTable, getDb, isDbConfigured } from "@/lib/db";
+import {
+  dbTable,
+  getDb,
+  getRequestHost,
+  isDbConfigured,
+  resolveAppEnvFromHost,
+  withAppEnv,
+} from "@/lib/db";
 import {
   isRentalResource,
   isValidIsoDate,
@@ -32,34 +39,38 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Nieprawidłowy zakres dat." }, { status: 400 });
   }
 
-  try {
-    const sql = getDb();
-    const reservations = dbTable(sql, "rental_reservations");
-    const rows = to
-      ? await sql<TrailerBookingRange[]>`
-          SELECT start_date::text, end_date::text, status
-          FROM ${reservations}
-          WHERE resource = ${resourceParam}
-            AND status IN ('pending', 'confirmed')
-            AND start_date <= ${to}::date
-            AND end_date >= ${from}::date
-          ORDER BY start_date ASC
-        `
-      : await sql<TrailerBookingRange[]>`
-          SELECT start_date::text, end_date::text, status
-          FROM ${reservations}
-          WHERE resource = ${resourceParam}
-            AND status IN ('pending', 'confirmed')
-            AND end_date >= ${from}::date
-          ORDER BY start_date ASC
-        `;
+  const appEnv = resolveAppEnvFromHost(getRequestHost(request.headers));
 
-    return NextResponse.json({ bookings: rows });
-  } catch (err) {
-    console.error("[trailer/availability]", err);
-    return NextResponse.json(
-      { error: "Nie udało się pobrać dostępności." },
-      { status: 500 },
-    );
-  }
+  return withAppEnv(appEnv, async () => {
+    try {
+      const sql = getDb();
+      const reservations = dbTable(sql, "rental_reservations");
+      const rows = to
+        ? await sql<TrailerBookingRange[]>`
+            SELECT start_date::text, end_date::text, status
+            FROM ${reservations}
+            WHERE resource = ${resourceParam}
+              AND status IN ('pending', 'confirmed')
+              AND start_date <= ${to}::date
+              AND end_date >= ${from}::date
+            ORDER BY start_date ASC
+          `
+        : await sql<TrailerBookingRange[]>`
+            SELECT start_date::text, end_date::text, status
+            FROM ${reservations}
+            WHERE resource = ${resourceParam}
+              AND status IN ('pending', 'confirmed')
+              AND end_date >= ${from}::date
+            ORDER BY start_date ASC
+          `;
+
+      return NextResponse.json({ bookings: rows });
+    } catch (err) {
+      console.error("[trailer/availability]", err);
+      return NextResponse.json(
+        { error: "Nie udało się pobrać dostępności." },
+        { status: 500 },
+      );
+    }
+  });
 }

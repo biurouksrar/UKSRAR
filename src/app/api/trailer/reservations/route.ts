@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import nodemailer from "nodemailer";
-import { contact } from "@/lib/content";
-import { dbTable, getDb, isDbConfigured } from "@/lib/db";
+import {
+  dbTable,
+  getDb,
+  getRequestHost,
+  isDbConfigured,
+  resolveAppEnvFromHost,
+  withAppEnv,
+} from "@/lib/db";
+import {
+  getOrCreateAccessToken,
+  getRequestOrigin,
+  notifyCustomerReservation,
+  notifyStaffNewReservation,
+  reservationsPortalUrl,
+} from "@/lib/rental-access";
 import {
   compareIsoDates,
   isRentalResource,
   isValidIsoDate,
-  rentalResourceLabels,
   todayIsoDate,
-  type RentalResource,
 } from "@/lib/trailer";
 
 type ReservationPayload = {
@@ -21,50 +31,8 @@ type ReservationPayload = {
   notes?: string;
 };
 
-const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? contact.email;
-
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-async function notifyNewReservation(payload: {
-  resource: RentalResource;
-  name: string;
-  email: string;
-  phone: string;
-  startDate: string;
-  endDate: string;
-  notes: string;
-}) {
-  const gmailUser = process.env.GMAIL_USER?.trim();
-  const gmailPass = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, "");
-  if (!gmailUser || !gmailPass) return;
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
-
-  const itemLabel = rentalResourceLabels[payload.resource];
-  const subject = `Nowa rezerwacja (${itemLabel}): ${payload.startDate} – ${payload.endDate}`;
-  const text = [
-    `Zasób: ${itemLabel}`,
-    `Imię / nazwa: ${payload.name}`,
-    `E-mail: ${payload.email}`,
-    `Telefon: ${payload.phone}`,
-    `Termin: ${payload.startDate} – ${payload.endDate}`,
-    `Uwagi: ${payload.notes || "—"}`,
-    "",
-    "Status: oczekuje na potwierdzenie (pending).",
-  ].join("\n");
-
-  await transporter.sendMail({
-    from: `"Rezerwacja — ${itemLabel}" <${gmailUser}>`,
-    to: CONTACT_TO,
-    replyTo: payload.email,
-    subject,
-    text,
-  });
 }
 
 /**
@@ -79,106 +47,128 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let body: ReservationPayload;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Nieprawidłowe dane." }, { status: 400 });
-  }
+  const appEnv = resolveAppEnvFromHost(getRequestHost(request.headers));
 
-  const resourceParam = (body.resource ?? "trailer").trim();
-  const name = (body.name ?? "").trim();
-  const email = (body.email ?? "").trim();
-  const phone = (body.phone ?? "").trim();
-  const startDate = (body.startDate ?? "").trim();
-  const endDate = (body.endDate ?? "").trim();
-  const notes = (body.notes ?? "").trim();
+  return withAppEnv(appEnv, async () => {
+    let body: ReservationPayload;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Nieprawidłowe dane." }, { status: 400 });
+    }
 
-  if (!isRentalResource(resourceParam)) {
-    return NextResponse.json({ error: "Nieprawidłowy zasób wypożyczenia." }, { status: 400 });
-  }
+    const resourceParam = (body.resource ?? "trailer").trim();
+    const name = (body.name ?? "").trim();
+    const email = (body.email ?? "").trim();
+    const phone = (body.phone ?? "").trim();
+    const startDate = (body.startDate ?? "").trim();
+    const endDate = (body.endDate ?? "").trim();
+    const notes = (body.notes ?? "").trim();
 
-  if (!name || !email || !isValidEmail(email) || !phone) {
-    return NextResponse.json(
-      { error: "Uzupełnij poprawnie imię, e-mail i telefon." },
-      { status: 400 },
-    );
-  }
+    if (!isRentalResource(resourceParam)) {
+      return NextResponse.json({ error: "Nieprawidłowy zasób wypożyczenia." }, { status: 400 });
+    }
 
-  if (!isValidIsoDate(startDate) || !isValidIsoDate(endDate)) {
-    return NextResponse.json({ error: "Nieprawidłowy termin." }, { status: 400 });
-  }
-
-  if (compareIsoDates(endDate, startDate) < 0) {
-    return NextResponse.json(
-      { error: "Data końcowa nie może być wcześniejsza niż początkowa." },
-      { status: 400 },
-    );
-  }
-
-  if (compareIsoDates(startDate, todayIsoDate()) < 0) {
-    return NextResponse.json(
-      { error: "Nie można rezerwować terminów z przeszłości." },
-      { status: 400 },
-    );
-  }
-
-  try {
-    const sql = getDb();
-    const reservations = dbTable(sql, "rental_reservations");
-
-    const conflicts = await sql`
-      SELECT id
-      FROM ${reservations}
-      WHERE resource = ${resourceParam}
-        AND status IN ('pending', 'confirmed')
-        AND start_date <= ${endDate}::date
-        AND end_date >= ${startDate}::date
-      LIMIT 1
-    `;
-
-    if (conflicts.length > 0) {
+    if (!name || !email || !isValidEmail(email) || !phone) {
       return NextResponse.json(
-        { error: "Wybrany termin jest już zajęty. Wybierz inne daty." },
-        { status: 409 },
+        { error: "Uzupełnij poprawnie imię, e-mail i telefon." },
+        { status: 400 },
       );
     }
 
-    const inserted = await sql<{ id: number }[]>`
-      INSERT INTO ${reservations} (resource, name, email, phone, start_date, end_date, notes, status)
-      VALUES (
-        ${resourceParam},
-        ${name},
-        ${email},
-        ${phone},
-        ${startDate}::date,
-        ${endDate}::date,
-        ${notes || null},
-        'pending'
-      )
-      RETURNING id
-    `;
-
-    try {
-      await notifyNewReservation({
-        resource: resourceParam,
-        name,
-        email,
-        phone,
-        startDate,
-        endDate,
-        notes,
-      });
-    } catch (mailErr) {
-      console.error("[trailer/reservations] powiadomienie e-mail:", mailErr);
+    if (!isValidIsoDate(startDate) || !isValidIsoDate(endDate)) {
+      return NextResponse.json({ error: "Nieprawidłowy termin." }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true, id: inserted[0]?.id });
-  } catch (err) {
-    console.error("[trailer/reservations]", err);
-    return NextResponse.json(
-      { error: "Nie udało się zapisać rezerwacji." },
-      { status: 500 },
-    );
-  }
+    if (compareIsoDates(endDate, startDate) < 0) {
+      return NextResponse.json(
+        { error: "Data końcowa nie może być wcześniejsza niż początkowa." },
+        { status: 400 },
+      );
+    }
+
+    if (compareIsoDates(startDate, todayIsoDate()) < 0) {
+      return NextResponse.json(
+        { error: "Nie można rezerwować terminów z przeszłości." },
+        { status: 400 },
+      );
+    }
+
+    try {
+      const sql = getDb();
+      const reservations = dbTable(sql, "rental_reservations");
+
+      const conflicts = await sql`
+        SELECT id
+        FROM ${reservations}
+        WHERE resource = ${resourceParam}
+          AND status IN ('pending', 'confirmed')
+          AND start_date <= ${endDate}::date
+          AND end_date >= ${startDate}::date
+        LIMIT 1
+      `;
+
+      if (conflicts.length > 0) {
+        return NextResponse.json(
+          { error: "Wybrany termin jest już zajęty. Wybierz inne daty." },
+          { status: 409 },
+        );
+      }
+
+      const inserted = await sql<{ id: number }[]>`
+        INSERT INTO ${reservations} (resource, name, email, phone, start_date, end_date, notes, status)
+        VALUES (
+          ${resourceParam},
+          ${name},
+          ${email},
+          ${phone},
+          ${startDate}::date,
+          ${endDate}::date,
+          ${notes || null},
+          'pending'
+        )
+        RETURNING id
+      `;
+
+      const accessToken = await getOrCreateAccessToken(sql, email);
+      const portalUrl = reservationsPortalUrl(
+        accessToken,
+        getRequestOrigin(request.headers),
+      );
+
+      try {
+        await Promise.all([
+          notifyStaffNewReservation({
+            resource: resourceParam,
+            name,
+            email,
+            phone,
+            startDate,
+            endDate,
+            notes,
+            portalUrl,
+          }),
+          notifyCustomerReservation({
+            resource: resourceParam,
+            name,
+            email,
+            startDate,
+            endDate,
+            notes,
+            portalUrl,
+          }),
+        ]);
+      } catch (mailErr) {
+        console.error("[trailer/reservations] powiadomienie e-mail:", mailErr);
+      }
+
+      return NextResponse.json({ ok: true, id: inserted[0]?.id });
+    } catch (err) {
+      console.error("[trailer/reservations]", err);
+      return NextResponse.json(
+        { error: "Nie udało się zapisać rezerwacji." },
+        { status: 500 },
+      );
+    }
+  });
 }

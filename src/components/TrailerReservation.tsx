@@ -402,7 +402,11 @@ export default function TrailerReservation({ resource }: TrailerReservationProps
 
             {status === "success" ? (
               <div className="contact-form-success">
-                <p>Rezerwacja wysłana! Skontaktujemy się, żeby ją potwierdzić.</p>
+                <p>
+                  Rezerwacja wysłana! Na podany e-mail wysłaliśmy potwierdzenie z
+                  linkiem do wszystkich Twoich rezerwacji. Skontaktujemy się, żeby
+                  ją potwierdzić.
+                </p>
                 <button type="button" className="btn-primary" onClick={closeModal}>
                   Zamknij
                 </button>
